@@ -38,8 +38,8 @@ def main():
     main_view_object = view.MainView()
     local_chatbot_object = model.LocalChatbot()
     controller_object = controller.ChatController(main_view_object, local_chatbot_object)
-    controller_object.chat_start()
-    # controller_object.main_view.mainloop()
+    # controller_object.chat_start()
+    controller_object.main_view.mainloop()
 
 if __name__ == '__main__':
     main()

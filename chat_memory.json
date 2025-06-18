@@ -1,0 +1,10 @@
+[
+  {
+    "role": "system",
+    "content": "Bitte antworte ausschlie\u00dflich auf Deutsch."
+  },
+  {
+    "role": "user",
+    "content": "Def:"
+  }
+]

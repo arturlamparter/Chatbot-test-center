@@ -1,10 +1,10 @@
 [
   {
     "role": "system",
-    "content": "Bitte antworte ausschlie\u00dflich auf Deutsch."
+    "content": "Hello"
   },
   {
     "role": "user",
-    "content": "Def:"
+    "content": "Whats upp?"
   }
 ]

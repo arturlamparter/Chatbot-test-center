@@ -1,100 +1,105 @@
 """
-Modul für Modell- und Datenverarbeitung im Chatbot-Projekt.
+Module for model and data processing in the chatbot project.
 
-Dieses Modul `model` enthält alle nicht-visuellen Logik-Komponenten des Projekts. Es steuert die
-Kommunikation mit dem lokalen Ollama-Server und verwaltet das Laden und Speichern von Chatdaten.
+This `model` module contains all non-visual logic components of the project. It handles
+communication with the local Ollama server and manages loading and saving chat data.
 
-Hauptfunktionen:
-- Verbindung mit Ollama über HTTP-API
-- Verarbeitung von Benutzer- und Bot-Nachrichten (Prompt-Verlauf)
-- Konsolenbasierte Interaktion im Testmodus
-- Lesen und Schreiben von JSON-Dateien zur lokalen Persistenz
+Main functions:
+- Connects to Ollama via HTTP API
+- Processes user and bot messages (prompt history)
+- Console-based interaction in test mode
+- Reading and writing JSON files for local persistence
 
-Klassen:
-    LocalChatbot: Verwaltet die Kommunikation mit dem Ollama-Chatmodell.
-    DataStorage: Verwaltet das Speichern und Laden von Chatverläufen in einer JSON-Datei.
+Classes:
+    LocalChatbot: Manages communication with the Ollama chat model.
+    DataStorage: Manages saving and loading chat histories in a JSON file.
 
-Nützliche Befehle (für Setup & manuelles Testen):
-    Starten: ollama serve
-    Modell starten: ollama run mistral  # z.B. für Mistral-7B-Instruct
+Useful commands (for setup & manual testing):
+    Start: ollama serve
+    Start model: ollama run mistral  # e.g. for Mistral-7B-Instruct
 
-Der Ollama-Server läuft typischerweise unter http://localhost:11434
+The Ollama server typically runs under http://localhost:11434
 
-Autor: Artur Lamparter <arturlamparter@web.de>
+Author: Artur Lamparter <arturlamparter@web.de>
 """
-import textwrap
 import requests
 import random
 import json
 import os
 
-import config
 import main
+import controller
 
 
 class LocalChatbot:
     """
-    Schnittstelle zum lokalen Ollama-Chatmodell.
+    Interface to the local Ollama chat model.
 
-    Diese Klasse kommuniziert über HTTP mit dem lokalen Ollama-Server,
-    verwaltet den Nachrichtenkontext (Prompts) und kann testweise über
-    die Konsole betrieben werden.
+    This class communicates via HTTP with the local Ollama server,
+    manages the message context (prompts), and can be run in a test mode via the console.
     """
 
     def __init__(self):
-        self.ollama_url = config.OLLAMA_URL
-        self.model = config.MODEL
+        self.ollama_url = controller.OLLAMA_URL
+        self.model = controller.MODEL
         self.prompts = []
-        self.test = False    # ----------------- Setze auf False, um echte Anfragen zu stellen -------------
+        self.test = controller.TEST
 
     def send_to_ollama(self, messages):
         """
-        Sendet eine Nachricht(enliste) an den Ollama-Server.
+        Sends a message (or list of messages) to the Ollama server.
 
         Args:
-            messages (list): Liste von Nachrichten im OpenAI-Format [{"role": "...", "content": "..."}]
+            messages (list): List of messages in OpenAI format [{"role": "...", "content": "..."}]
 
         Returns:
-            str: Antworttext vom Modell
+            str: Response text from the model
         """
         payload = {
             "model": self.model,
             "messages": messages,
-            "stream": False # Die komplette Antwort wird auf einmal zurückgegeben.
+            "stream": False # The entire response will be returned at once.
         }
 
-        # Testen der App ohne ChatBot
+        # Test the app without ChatBot
         if self.test:
-            return f"Testfall: Antwort nr: {random.random()}"
+            return f"Test case: Response nr: {random.randint(0, 999999)}"
         else:
-            response = requests.post(self.ollama_url, json=payload)
-            response.raise_for_status()
-            return response.json()["message"]["content"]
+            try:
+                response = requests.post(self.ollama_url, json=payload)
+                response.raise_for_status()  # Raise an error if the HTTP status code is not OK
+                return response.json()["message"]["content"]
+            except requests.exceptions.RequestException as e:
+                controller.logger.error(f"Request to Ollama failed: {e}")
+                return "There was a problem connecting to the bot."
+            except KeyError:
+                controller.logger.error("Ollama response format is unexpected.")
+                return "Malformed response from the model."
 
     def chat_input(self):
         """
-        Konsolen-Eingabezeilen sammeln, bis eine leere Zeile eingegeben wird.
+        Collects console input lines until an empty line is entered.
 
         Returns:
-            str: Zusammengesetzter Text aus mehreren Zeilen
+            str: A composed text from multiple lines
         """
         print("->")
         lines = []
-        line = input().strip()  # Entfernt Leerzeichen, Tabs, Zeilenumbrüche(Vorne und Hinten)
+        line = input().strip()  # Removes spaces, tabs, and line breaks (leading and trailing)
         lines.append(line)
         return "\n ".join(lines)
 
     def chat(self):
         """
-        Führt eine einfache Konsolen-Konversation mit dem Chatbot.
-        Eingabe: Benutzer
-        Ausgabe: Antwort des Chatbots
+        Conducts a simple console conversation with the chatbot.
+        Input: User
+        Output: Chatbot's response
         """
-        print("Spreche mit Chatbot (bye zum Beenden)\n")
+        print("Talk to the chatbot (bye to exit)\n")
         while True:
             user_input = self.chat_input()
             if user_input.lower() in ["exit", "quit", "bye"]:
-                print("Bis bald!")
+                print("Goodbye!")
                 break
 
             self.prompts.append({"role": "user", "content": user_input})
@@ -103,40 +108,76 @@ class LocalChatbot:
             try:
                 pass
                 response_text = self.send_to_ollama(context)
-                print("Bot:", textwrap.fill(response_text, width=80)) # 40 Zeichen pro Zeile
-                self.prompts.append({"role": "assistant", "content": response_text}) # antwort anhängen
+                # print("Bot:", textwrap.fill(response_text, width=80)) # 40 characters per line
+                self.prompts.append({"role": "assistant", "content": response_text})
             except Exception as e:
-                print("Fehler bei der Kommunikation mit Ollama:", e)
+                controller.logger.error(f"Error communicating with Ollama: {e}")
 
 class DataStorage:
     """
-    Einfache JSON-Datei-Schnittstelle zur Speicherung und zum Laden von Prompts.
+    Simple JSON file interface for saving and loading prompts.
     """
 
     def __init__(self):
-        pass # Aktuell keine Initialisierung nötig
+        pass # Currently no initialization needed
 
-    def load_json(self):
+    def load_json(self, file_name=None):
         """
-        Lädt gespeicherte Prompts aus einer JSON-Datei.
+        Loads from a JSON file.
+
+        Args:
+            file_name (str, optional): The name of the configuration file.
 
         Returns:
-            list: Liste von Prompt-Dictionaries oder leere Liste bei Fehler.
+            dict: The loaded configuration as a dictionary.
+                  Returns an empty dictionary in case of error (e.g., file not found, invalid JSON).
         """
-        if os.path.exists(config.FILE_NAME):
-            with open(config.FILE_NAME, "r", encoding="utf-8") as f:    # f als json
-                return json.load(f)                                     # Erzeugt ein Dictionary
-        return []
+        if file_name:
+            path = file_name
+        else:
+            path = controller.FILE_NAME
+
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as file:
+                    return json.load(file) # Dictionary
+            except FileNotFoundError:
+                controller.logger.error(f"Configuration file {path} not found.")
+                raise FileNotFoundError(f"Configuration file {path} not found.")
+            except json.JSONDecodeError:
+                controller.logger.error(f"Configuration file {path} contains invalid JSON.")
+                raise json.JSONDecodeError(f"Configuration file {path} contains invalid JSON.")
+            except Exception as e:
+                controller.logger.error(f"An error occurred while loading the config file: {e}")
+                raise Exception(f"An error occurred while loading the config file: {e}")
+        else:
+            controller.logger.warning(f"The file {path} does not exist.")
+            return {}  # empty Dictionary
 
     def save_json(self, prompts):
         """
-        Speichert eine Liste von Prompts in eine JSON-Datei.
+        Saves a list of prompts to a JSON file.
 
         Args:
-            prompts (list): Promptliste im Format [{"role": "...", "content": "..."}]
+            prompts (list): List of prompts in the format [{"role": "...", "content": "..."}]
+
+        Raises:
+            IOError: If there is an issue opening or writing to the file.
+            ValueError: If the prompts are not in the expected format.
         """
-        with open(config.FILE_NAME, "w", encoding="utf-8") as f:
-            json.dump(prompts, f, indent=2)
+        path = controller.FILE_NAME
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(prompts, f, indent=2)  # Save prompts as JSON
+        except IOError as e:
+            controller.logger.error(f"Error opening or writing to the file {path}: {e}")
+            raise IOError(f"Error opening or writing to the file {path}: {e}")
+        except ValueError as e:
+            controller.logger.error(f"Invalid data format for prompts: {e}")
+            raise ValueError(f"Invalid data format for prompts: {e}")
+        except Exception as e:
+            controller.logger.error(f"An unexpected error occurred while saving the file: {e}")
+            raise Exception(f"An unexpected error occurred while saving the file: {e}")
 
 if __name__ == '__main__':
     main.main()

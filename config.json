@@ -1,0 +1,7 @@
+{
+    "OLLAMA_URL": "http://localhost:11434/api/chat",
+    "MODEL": "mistral",
+    "FILE_NAME": "chat_memory.json",
+    "WIDGET_DISTANCE": 20,
+    "TEST": false
+}

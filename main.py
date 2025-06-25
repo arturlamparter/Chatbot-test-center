@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
 
 """
-Startmodul für das Chatbot-Projekt mit grafischer Benutzeroberfläche.
+Main module for the chatbot project with a graphical user interface (GUI).
 
-Dieses Skript initialisiert und startet die Hauptanwendung im MVC-Stil (Model-View-Controller).
-Es verknüpft die GUI (View), die Steuerlogik (Controller) und das Chatmodell (Model),
-wodurch eine interaktive Chat-Kommunikation mit einem lokal laufenden Ollama-Server ermöglicht wird.
+This script initializes and starts the main application following the MVC architecture pattern (Model-View-Controller).
+It connects the GUI (View), control logic (Controller), and chat model (Model)
+to enable interactive chat communication with a locally running Ollama server.
 
-Anwendungszweck:
-    - Demonstration von Chatbot-Agenten
-    - Integration von KI-Modellen in Desktop-Oberflächen
-    - Lernprojekt für künstliche Intelligenz und Softwarearchitektur
+Use cases:
+    - Demonstration of a chatbot agent
+    - Integration of AI models into desktop applications
+    - Educational project for artificial intelligence and software architecture
 
-Projektziel: Demonstration Chat Bot Agenten mit gelenkter Kommunikation
+Project goal: Demonstration of a chatbot agent with guided communication
 
-Startvoraussetzungen:
-    - Ollama-Server muss lokal laufen (siehe `model.py`)
-    - Konfiguration erfolgt über `config.py`
+Prerequisites:
+    - The Ollama server must be running locally (see `model.py`)
+    - Configuration is handled via `config.json`
 
 Version:
     0.1.0
 
-Autor: Artur Lamparter <arturlamparter@web.de>
+Author: Artur Lamparter <arturlamparter@web.de>
 """
 
 __author__ = "Artur Lamparter <arturlamparter@web.de>"
@@ -33,7 +33,7 @@ import model
 
 def main():
     """
-    Initialisiert die Hauptkomponenten und startet die GUI-Hauptschleife.
+    Initializes the main components of the application and starts the GUI main loop.
     """
     main_view_object = view.MainView()
     local_chatbot_object = model.LocalChatbot()
@@ -43,4 +43,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

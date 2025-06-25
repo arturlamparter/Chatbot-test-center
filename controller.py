@@ -1,26 +1,26 @@
 """
-Steuerungsmodul für das Chatbot-Projekt.
+Controller module for the chatbot project.
 
-Das Modul `controller` enthält die zentrale Logik zur Verbindung von Benutzeroberfläche
-und Datenverarbeitung bzw. Kommunikation mit dem lokalen Chatbot-Modell in Ollama.
-Es fungiert als Vermittler zwischen View-Elementen, Nutzereingaben und dem Sprachmodell.
+The `controller` module contains the central logic to connect the user interface
+and data processing or communication with the local chatbot model in Ollama.
+It serves as a mediator between view elements, user inputs, and the language model.
 
-Funktionen und Besonderheiten:
-- Initialisierung der Chat-Komponenten mit gespeicherten Prompts
-- Verwaltung der Benutzerinteraktion (z.B. Absenden von Nachrichten, Fortschalten von Prompts)
-- Dynamisches Erzeugen neuer Eingabefelder
-- Aufbereitung der Eingaben und Kommunikation mit dem Chatbot
-- Optionales Speichern und Laden von Promptverläufen
+Features and Highlights:
+- Initialization of chat components with stored prompts
+- Management of user interaction (e.g., sending messages, navigating through prompts)
+- Dynamically generating new input fields
+- Processing user inputs and communication with the chatbot
+- Optional saving and loading of prompt histories
 
-Klassen:
-    ChatController: Steuert die gesamte Chat-Logik inklusive GUI-Verknüpfung und Modellanfragen.
+Classes:
+    ChatController: Controls the entire chat logic, including UI linkage and model requests.
 
-Verwendete interne Module:
-    - model: Für Datenhaltung und Persistenz (z.B. Laden/Speichern von Prompts)
-    - view: Für die Anzeige und Interaktion in der Benutzeroberfläche
-    - main: Einstiegspunkt des Programms (nicht direkt in dieser Datei genutzt, aber als Strukturgeber)
+Used internal modules:
+    - model: For data storage and persistence (e.g., loading/saving prompts)
+    - view: For displaying and interacting with the user interface
+    - main: Entry point of the program (not directly used in this file but serves as a structural guide)
 
-Autor: Artur Lamparter <arturlamparter@web.de>
+Author: Artur Lamparter <arturlamparter@web.de>
 """
 
 import logging
@@ -29,46 +29,55 @@ import main
 import view
 import model
 
-# Logger-Konfiguration
+# Logger configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Load JSON-Konfiguration
+config = model.DataStorage().load_json("config.json")
+
+OLLAMA_URL = config.get('OLLAMA_URL', "http://localhost:11434/api/chat")
+MODEL = config.get('MODEL', "mistral")
+FILE_NAME = config.get('FILE_NAME', "chat_memory.json")
+WIDGET_DISTANCE = config.get('WIDGET_DISTANCE', 20)
+TEST = config.get('TEST', False)
+
 class ChatController:
     """
-    Die zentrale Controller-Klasse, die die View, das Model und den Chatbot orchestriert.
+    The central controller class that orchestrates the View, the Model, and the Chatbot.
     """
 
     def __init__(self, main_view, local_chatbot):
         """
-        Initialisiert den Controller.
+        Initializes the controller.
 
         Args:
-            main_view: Das Haupt-GUI-Element.
-            local_chatbot: Eine Instanz des lokalen Chatbots, der mit Ollama kommuniziert.
+            main_view: The main GUI element.
+            local_chatbot: An instance of the local chatbot that communicates with Ollama.
 
-            Beispiel self.prompts = [[{"position": 0, "role": "system", "content": "Dein Name ist Jana."}]]
+            Example: self.prompts = [[{"position": 0, "role": "system", "content": "Your name is Jana."}]]
         """
         self.main_view = main_view
         self.local_chatbot = local_chatbot
         self.view_objects = []
-        self.save_prompts = True # --- Prompts speichern? ---
+        self.save_prompts = True  # --- Save prompts? ---
         self.prompts = self.convert_prompts(model.DataStorage().load_json())
         self.create_view_objects(self.prompts)
 
     def chat_start(self):
         """
-        Startet die Chat-Kommunikation.
-        Test version für die Konsole
+        Starts the chat communication.
+        Test version for the console
         """
         self.local_chatbot.chat()
 
     def create_view_objects(self, prompts, row=0):
         """
-        Erstellt GUI-Komponenten basierend auf gespeicherten Prompts.
+        Creates GUI components based on stored prompts.
 
         Args:
-            prompts (list): Liste von Prompts (als dict).
-            row (int): Startzeile in der GUI.
+            prompts (list): List of prompts (as dict).
+            row (int): Starting row in the GUI.
         """
         for prompt in prompts:
             view_object = view.CreatePrompt(self.main_view.scrollable_frame, row, prompt)
@@ -78,53 +87,53 @@ class ChatController:
 
     def convert_prompts(self, json_data):
         """
-        Wandelt JSON-Daten aus dem Storage in nutzbare Prompt-Strukturen um.
-        View verwaltet mehrere Versionen der Prompts in der Liste
+        Converts JSON data from the storage into usable prompt structures.
+        The view manages multiple versions of prompts in the list.
 
         Args:
-            json_data (list): Geladene JSON-Daten.
+            json_data (list): Loaded JSON data.
 
         Returns:
-            list: Strukturierte Prompt-Daten.
+            list: Structured prompt data.
         """
         return [[{"role": item["role"], "content": item["content"]}] for item in json_data]
 
     def btn_send_callback(self, obj):
         """
-        Callback-Funktion für den Senden-Button jedes Prompt-Objekts.
+        Callback function for the send button of each prompt object.
 
         Args:
-            obj: Das aufrufende View-Objekt.
+            obj: The calling view object.
         """
-        # --- Prompterstellung bestehend aus vorhergehenden Anfragen/Antworten ---
+        # --- Creating prompt consisting of previous queries/responses ---
         prompt = []
         for view_objects in self.view_objects:
             if view_objects.pos <= obj.pos and view_objects.chk_btn_var_show():
                 prompt.append(view_objects.get_prompt())
 
-        # Optional speichern
+        # Optional save
         if self.save_prompts:
             model.DataStorage().save_json(prompt)
 
-        # --- Anfrage an den Bot senden ---
+        # --- Send request to the bot ---
         try:
             response_text = self.local_chatbot.send_to_ollama(prompt)
         except Exception as e:
-            logger.error("Fehler bei der Kommunikation mit Ollama: %s", e)
-            response_text = f"Es gab ein Problem mit der Verbindung zum Bot. Fehler: {e}"
+            logger.error("Error communicating with Ollama: %s", e)
+            response_text = f"There was a problem connecting to the bot. Error: {e}"
 
-        # --- Antwortverarbeitung ---
+        # --- Processing response ---
         response_prompt = {"role": "assistant", "content": response_text}
 
-        # Antwort anzeigen oder neue View-Objekte anlegen
+        # Display the response or create new view objects
         if obj.pos < len(self.view_objects) - 1:
             next_view = self.view_objects[obj.pos + 1]
             next_view.txt_lst.append(response_prompt)
             next_view.txt_nummer += 1
-            next_view.update_prompt(lbl_pos=None, lbl_role=None, txt_wdg=response_prompt["content"])
+            next_view.update_prompt(lbl_pos=next_view.txt_nummer, lbl_role="assistant", txt_wdg=response_prompt["content"])
         else:
-            new_prompt = {"role": "user", "content": "Def:"} # Platzhalter
-            self.create_view_objects([[response_prompt],[new_prompt]], len(self.view_objects))
+            new_prompt = {"role": "user", "content": "Def:"}  # Placeholder
+            self.create_view_objects([[response_prompt], [new_prompt]], len(self.view_objects))
 
 if __name__ == '__main__':
     main.main()

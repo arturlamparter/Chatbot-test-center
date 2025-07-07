@@ -1,25 +1,32 @@
-# ChatBot GUI Projekt
+# ChatBot GUI Project
 
-Ein lokal laufender, erweiterbarer Chatbot mit grafischer Benutzeroberfläche (Tkinter), gesteuert nach dem MVC-Prinzip und verbunden mit einem Ollama-Modell wie `mistral`.
+A locally running, extensible chatbot with a graphical user interface (Tkinter), following the MVC pattern, and connected to an Ollama model like `mistral`.
 
-## Projektziel
+## Project Objective
 
-Demonstration und Lernplattform für:
-- KI-gestützte Chatbots
-- MVC-Architektur in Python
-- GUI-Entwicklung mit `tkinter`
-- Lokale Sprachmodelle über [`ollama`](https://ollama.com/)
+This project serves as a demonstration and learning platform for:
+- AI-powered chatbots
+- MVC architecture in Python
+- GUI development with `tkinter`
+- Local language models via [`ollama`](https://ollama.com/)
 
-## Anforderungen
+## Requirements
 
 - Python ≥ 3.9
-- Ollama installiert und lauffähig
+- Ollama installed and running
 
-## Lizenz Dieses Projekt steht unter der MIT-Lizenz.
+## License
 
-### Installation Ollama
+This project is licensed under the MIT License.
+
+## Installation
+
+### 1. Install Ollama
+
+To install Ollama, run the following commands:
 
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
 ollama serve
-ollama run mistral  # Modell starten (ggf. zuerst laden)
+ollama run mistral  # Start the model (may need to be loaded first)
+

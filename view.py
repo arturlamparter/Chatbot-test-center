@@ -75,17 +75,17 @@ class CreatePrompt:
             frame (tk.Frame): The parent frame (from MainView).
             pos (int): Position of the prompt (for vertical arrangement).
             txt_lst (list): List of variants (dictionaries with "role" and "content").
-            Beispiel:
-                self.txt_lst = [{'position': 0, 'role': 'system', 'content': 'Dein Name ist Jana.'}]
-                self.prompt = {'position': 0, 'role': 'system', 'content': 'Dein Name ist Jana.'}
+        Beispiel:
+            self.txt_lst = [{'position': 0, 'role': 'system', 'content': 'Dein Name ist Jana.'}]
+            self.prompt = {'position': 0, 'role': 'system', 'content': 'Dein Name ist Jana.'}
         """
         self.frame = frame
         self.pos = pos
-        self.pos_frame = pos * controller.WIDGET_DISTANCE
+        self.pos_frame = pos * 20               # 20 = Widget distance
         self.txt_lst = txt_lst
         self.prompt = None
         self.txt_nummer = 0
-        self.chk_btn_var = tk.IntVar(value=1)  # Checkbox state (0 = off, 1 = on)
+        self.chk_btn_var = tk.IntVar(value=1)   # Checkbox state (0 = off, 1 = on)
 
         # Placeholder row for spacing and setting length
         for i in range(10):
@@ -94,8 +94,7 @@ class CreatePrompt:
         self.chk_btn = tk.Checkbutton(self.frame, text="Activate", variable=self.chk_btn_var)
         self.chk_btn.grid(row=5 + self.pos_frame, column=0)
 
-        self.btn_delete = self.create_button(self.frame, f"Delete",
-                                             lambda: self.txt_wdg.delete("1.0", "end"), 5, 1)
+        self.create_button(self.frame, f"Clear", lambda: self.txt_wdg.delete("1.0", "end"), 5, 1)
 
         self.lbl_pos = tk.Label(self.frame, text="0", anchor="w", font=("Arial", 14))
         self.lbl_pos.grid(row=5 + self.pos_frame, column=2)
@@ -122,10 +121,7 @@ class CreatePrompt:
         self.btn_send = self.create_button(self.frame, f"Submit", "", 20, 0)
         self.btn_back = self.create_button(self.frame, f"Back", self.btn_back_click, 20, 8)
         self.btn_before = self.create_button(self.frame, f"Forward", self.btn_forward_click, 20, 9)
-
-        self.update_prompt(lbl_pos=str(self.txt_nummer),
-                           lbl_role=self.txt_lst[self.txt_nummer]["role"],
-                           txt_wdg=self.txt_lst[self.txt_nummer]["content"])
+        self.update_prompt()
 
     def create_button(self, parent, text, command, row, col):
         """Helper method to create buttons."""
@@ -154,14 +150,10 @@ class CreatePrompt:
 
     def btn_back_click(self):
         """Jumps to the previous prompt."""
-        if self.txt_nummer == 0:
-            print("Wir sind am anfang.")
-        else:
+        if self.txt_nummer != 0:
             self.txt_lst[self.txt_nummer]["content"] = self.txt_wdg.get("1.0", "end-1c")
             self.txt_nummer -= 1
-        self.update_prompt(lbl_pos=str(self.txt_nummer),
-                           lbl_role=self.txt_lst[self.txt_nummer]["role"],
-                           txt_wdg=self.txt_lst[self.txt_nummer]["content"])
+        self.update_prompt()
 
     def btn_forward_click(self):
         """Jumps to the next prompt or creates a new one."""
@@ -173,9 +165,7 @@ class CreatePrompt:
                                  "content": "New"
                                  })
         self.txt_nummer += 1
-        self.update_prompt(lbl_pos=str(self.txt_nummer),
-                           lbl_role=self.txt_lst[self.txt_nummer]["role"],
-                           txt_wdg=self.txt_lst[self.txt_nummer]["content"])
+        self.update_prompt()
 
     def chk_btn_var_show(self):
         """Returns the status of the activation checkbox."""
@@ -190,15 +180,12 @@ class CreatePrompt:
         """Sets the callback function for the submit button."""
         self.btn_send.config(command=lambda: callback(self))
 
-    def update_prompt(self, lbl_pos=None, lbl_role=None, txt_wdg=None):
+    def update_prompt(self):
         """Updates the display and content of the prompt."""
-        if lbl_pos:
-            self.lbl_pos.config(text=lbl_pos)
-        if lbl_role:
-            self.lbl_role.config(text=lbl_role)
-        if txt_wdg:
-            self.txt_wdg.delete("1.0", "end")
-            self.txt_wdg.insert("1.0", txt_wdg)
+        self.lbl_pos.config(text=self.txt_nummer)
+        self.lbl_role.config(text=self.txt_lst[self.txt_nummer]["role"])
+        self.txt_wdg.delete("1.0", "end")
+        self.txt_wdg.insert("1.0", self.txt_lst[self.txt_nummer]["content"])
 
 if __name__ == '__main__':
     main.main()

@@ -154,7 +154,7 @@ class DataStorage:
             controller.logger.warning(f"The file {path} does not exist.")
             return {}  # empty Dictionary
 
-    def save_json(self, prompts):
+    def save_json(self, prompts, file_name=None):
         """
         Saves a list of prompts to a JSON file.
 
@@ -165,7 +165,11 @@ class DataStorage:
             IOError: If there is an issue opening or writing to the file.
             ValueError: If the prompts are not in the expected format.
         """
-        path = controller.FILE_NAME
+        if file_name:
+            path = file_name
+        else:
+            path = controller.FILE_NAME
+
         try:
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(prompts, f, indent=2)  # Save prompts as JSON

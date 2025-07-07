@@ -19,13 +19,13 @@ Prerequisites:
     - Configuration is handled via `config.json`
 
 Version:
-    0.1.0
+    0.1.1
 
 Author: Artur Lamparter <arturlamparter@web.de>
 """
 
 __author__ = "Artur Lamparter <arturlamparter@web.de>"
-__version__ = "0.1.0"  # git tag v0.1.0
+__version__ = "0.1.1"
 
 import view
 import controller

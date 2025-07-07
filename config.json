@@ -1,7 +1,10 @@
 {
+    "Comment1": "Target address for HTTP requests to the Ollama chat endpoint",
     "OLLAMA_URL": "http://localhost:11434/api/chat",
+    "Comment2": "Name of the language model to use",
     "MODEL": "mistral",
-    "FILE_NAME": "chat_memory.json",
-    "WIDGET_DISTANCE": 20,
-    "TEST": false
+    "Comment3": "Name of the JSON file where prompt histories are stored locally",
+    "FILE_NAME": "Data/chat_memory.json",
+    "Comment4": "Test mode without ollama",
+    "TEST": true
 }
